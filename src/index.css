@@ -1,0 +1,76 @@
+@import "tailwindcss";
+@import "pdfjs-dist/web/pdf_viewer.css";
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 antialiased min-h-screen selection:bg-[#EAF3DE] selection:text-[#3B6D11] transition-colors duration-250;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* Solid Academic Panel (No gradients, no shadows) */
+.glass-panel {
+  @apply bg-white dark:bg-slate-900 border-[0.5px] border-slate-200 dark:border-slate-800 transition-colors duration-250;
+}
+
+/* Solid Academic Card (No shadows, hover only darkens border) */
+.glass-card {
+  @apply bg-white dark:bg-slate-900 border-[0.5px] border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600 transition-all duration-300;
+}
+
+/* Clean input borders */
+.glass-input {
+  @apply bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 focus:border-[#3B6D11] focus:ring-1 focus:ring-[#3B6D11] rounded-lg px-4 py-2 text-slate-800 dark:text-slate-100 outline-none transition-all duration-200;
+}
+
+/* Custom Scrollbar (Flat) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-100 dark:bg-slate-950 transition-colors;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 dark:bg-slate-800 hover:bg-slate-400 dark:hover:bg-slate-700 rounded-full transition-colors;
+}
+
+/* Text layer selection override for PDF original canvas */
+.textLayer {
+  mix-blend-mode: normal;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+.textLayer span {
+  color: transparent !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+.textLayer ::selection {
+  background-color: rgba(59, 109, 17, 0.25) !important;
+  color: transparent !important;
+}
+.dark .textLayer ::selection {
+  background-color: rgba(59, 109, 17, 0.35) !important;
+}
+
+/* Custom match toast animation */
+@keyframes slide-in {
+  from {
+    transform: translateY(1rem) scale(0.98);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
