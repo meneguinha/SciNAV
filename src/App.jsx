@@ -45,7 +45,7 @@ function AppContent() {
           
           {/* Logo */}
           <div className="flex items-center space-x-2 shrink-0 select-none">
-            <BookOpen className="w-5 h-5 text-[#3B6D11]" />
+            <img src="./logo.png" alt="SciNAV Logo" className="w-6 h-6 object-contain" />
             <span className="text-[22px] font-medium text-slate-900 dark:text-white tracking-tight">
               SciNAV
             </span>
