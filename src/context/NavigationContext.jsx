@@ -148,7 +148,9 @@ export function NavigationProvider({ children }) {
         referencesStartPage: startPage,
         pdfPagesText: pageTexts,
         author: cleanAuthor,
-        title: cleanTitle
+        title: cleanTitle,
+        fullAuthor: docAuthor.trim(),
+        fullTitle: docTitle.trim()
       };
 
       setLoadedDocuments(prev => {
@@ -298,6 +300,26 @@ export function NavigationProvider({ children }) {
   const activeDoc = loadedDocuments.find(d => d.id === activeDocId) || null;
   const activeAuthor = activeDoc ? activeDoc.author : '';
   const activeTitle = activeDoc ? activeDoc.title : '';
+  const activeFullAuthor = activeDoc ? (activeDoc.fullAuthor || activeDoc.author) : '';
+  const activeFullTitle = activeDoc ? (activeDoc.fullTitle || activeDoc.title) : '';
+
+  const activeDocDefaultRef = activeFullAuthor && activeFullAuthor !== 'Autor desconhecido'
+    ? `${activeFullAuthor} — ${activeFullTitle}`
+    : activeFullTitle;
+
+  const activeDocumentReference = activeDoc && activeDoc.customDocumentReference
+    ? activeDoc.customDocumentReference
+    : activeDocDefaultRef;
+
+  const updateActiveDocReference = useCallback((newRef) => {
+    if (!activeDocId) return;
+    setLoadedDocuments(prev => prev.map(d => {
+      if (d.id === activeDocId) {
+        return { ...d, customDocumentReference: newRef };
+      }
+      return d;
+    }));
+  }, [activeDocId]);
 
   return (
     <NavigationContext.Provider
@@ -334,6 +356,10 @@ export function NavigationProvider({ children }) {
         closeDoc,
         activeAuthor,
         activeTitle,
+        activeFullAuthor,
+        activeFullTitle,
+        activeDocumentReference,
+        updateActiveDocReference,
         isFullscreen,
         setIsFullscreen
       }}

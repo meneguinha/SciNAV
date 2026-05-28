@@ -183,7 +183,9 @@ export default function SummaryView() {
                     <div className="space-y-2.5">
                       {citationRefs.map((ref, idx) => (
                         <div key={idx} className="space-y-1">
-                          {ref.citationText && ref.citationText !== '(Citação manual)' && (
+                          {ref.citationText && 
+                           ref.citationText !== '(Citação manual)' && 
+                           ref.citationText !== '(Citação do documento)' && (
                             <div className="text-[12px] font-semibold text-[#3B6D11] bg-[#EAF3DE] px-1.5 py-0.2 rounded w-fit font-mono select-none">
                               {ref.citationText}
                             </div>

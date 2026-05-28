@@ -59,7 +59,7 @@ export default function PDFReader() {
   const { 
     pdfDoc, numPages, currentPage, setCurrentPage, 
     zoom, setZoom, references, pdfPagesText, saveCitation,
-    isFullscreen
+    isFullscreen, activeDocumentReference, updateActiveDocReference
   } = useNavigation();
 
   const canvasRef = useRef(null);
@@ -246,12 +246,12 @@ export default function PDFReader() {
         setShowManualLinker(null);
       }
     } else {
-      // Manual selection placeholder
+      // Manual selection placeholder - default to document reference
       initialLinks.push({
-        citationText: '(Citação manual)',
-        referenceText: null
+        citationText: '(Citação do documento)',
+        referenceText: activeDocumentReference
       });
-      setShowManualLinker('(Citação manual)');
+      setShowManualLinker(null);
     }
     setLinkedRefs(initialLinks);
   };
@@ -282,6 +282,9 @@ export default function PDFReader() {
       }
       return item;
     }));
+    if (citationText === '(Citação do documento)') {
+      updateActiveDocReference(selectedRef);
+    }
     setShowManualLinker(null);
     setSearchQuery('');
   };
@@ -313,6 +316,9 @@ export default function PDFReader() {
     setLinkedRefs(prev => prev.map(item =>
       item.citationText === citationText ? { ...item, referenceText: trimmed } : item
     ));
+    if (citationText === '(Citação do documento)') {
+      updateActiveDocReference(trimmed);
+    }
     setEditingRef(null);
     setEditingText('');
   };
@@ -639,7 +645,11 @@ export default function PDFReader() {
                           {/* Reference body */}
                           {item.referenceText && !isEditing ? (
                             <div className="space-y-2">
-                              <div className="p-3 bg-slate-50 dark:bg-slate-950 rounded border border-slate-200 dark:border-slate-800 text-[13px] leading-relaxed text-slate-700 dark:text-slate-350 max-h-36 overflow-y-auto">
+                              <div className={`p-3 rounded text-[13px] leading-relaxed max-h-36 overflow-y-auto ${
+                                item.citationText === '(Citação do documento)'
+                                  ? 'bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/50 text-amber-800 dark:text-amber-300'
+                                  : 'bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-350'
+                              }`}>
                                 {item.referenceText}
                               </div>
                               <button
