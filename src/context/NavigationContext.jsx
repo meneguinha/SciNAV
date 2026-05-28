@@ -313,13 +313,35 @@ export function NavigationProvider({ children }) {
 
   const updateActiveDocReference = useCallback((newRef) => {
     if (!activeDocId) return;
+
+    // Find the active doc's filename to match against saved citations
+    const activeDoc = loadedDocuments.find(d => d.id === activeDocId);
+    const activeDocName = activeDoc ? activeDoc.name : null;
+
     setLoadedDocuments(prev => prev.map(d => {
       if (d.id === activeDocId) {
         return { ...d, customDocumentReference: newRef };
       }
       return d;
     }));
-  }, [activeDocId]);
+
+    if (activeDocName) {
+      setSavedCitations(prev => prev.map(citation => {
+        // If the citation belongs to the active document
+        if (citation.docName === activeDocName) {
+          // Map over its references list
+          const updatedRefs = (citation.references || []).map(ref => {
+            if (ref.citationText === '(Citação do documento)') {
+              return { ...ref, referenceText: newRef };
+            }
+            return ref;
+          });
+          return { ...citation, references: updatedRefs };
+        }
+        return citation;
+      }));
+    }
+  }, [activeDocId, loadedDocuments]);
 
   return (
     <NavigationContext.Provider
