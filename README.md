@@ -1,5 +1,7 @@
 # SciNAV — PDF Navigator & Citation Matcher
 
+![SciNAV Interface](image-readmd.png)
+
 O **SciNAV** é uma ferramenta web acadêmica projetada para aumentar a produtividade na leitura de artigos científicos e no cruzamento de referências bibliográficas. Desenvolvida sob uma identidade visual limpa, profissional e livre de distrações, a aplicação funciona 100% de forma local no navegador (preservando a privacidade dos seus arquivos).
 
 ---
