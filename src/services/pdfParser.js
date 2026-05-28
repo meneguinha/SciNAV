@@ -26,25 +26,50 @@ export function isNewReferenceStart(line, prevLine) {
   if (!line) return false;
   const trimmed = line.trim();
 
-  // IEEE style: [1] or 1.
+  // 1. IEEE/numeric style: [1] or 1.
   if (/^\[\d+\]/.test(trimmed)) return true;
   if (/^\d+\b/.test(trimmed)) {
     if (/^\d+\.?\s+[A-ZÀ-ÖØ-Þ]/.test(trimmed)) return true;
   }
 
-  // APA / Harvard style: Capitalized name(s) followed by initials or year
-  // e.g. "Silva, A." or "Smith, J. D., & Jones, M." or "Doe, J. (2020)"
+  // 2. Candidate reference starting patterns (APA, Harvard, ABNT)
+  let isCandidate = false;
+
+  // Pattern A: Author name(s) format: e.g. "Silva, A." or "Smith, J. D., & Jones, M."
   if (/^[A-ZÀ-ÖØ-Þ][a-zA-ZÀ-ÖØ-Þß-ÿ\s'-]+,\s*[A-ZÀ-ÖØ-Þ]\b/.test(trimmed)) {
-    if (!prevLine || /[.!?\]]\s*$/.test(prevLine.trim())) {
-      return true;
-    }
+    isCandidate = true;
+  }
+  // Pattern B: Author(s) followed by Year in parentheses
+  // e.g. "Doe, J. (2020)" or "Smith & Jones (2018)"
+  // Limit length between author start and year to 100 chars to avoid matching random body text
+  else if (/^[A-ZÀ-ÖØ-Þ][a-zA-ZÀ-ÖØ-Þß-ÿ\s&.,'-]{1,100}\s*\([12]\d{3}\)/.test(trimmed)) {
+    isCandidate = true;
   }
 
-  // Author (Year) start format
-  if (/^[A-ZÀ-ÖØ-Þ][a-zA-ZÀ-ÖØ-Þß-ÿ\s'-]+.*?\([12]\d{3}\)/.test(trimmed)) {
-    if (!prevLine || /[.!?\]]\s*$/.test(prevLine.trim())) {
-      return true;
+  if (isCandidate) {
+    if (!prevLine) return true;
+    const prevTrimmed = prevLine.trim();
+    if (prevTrimmed === '') return true;
+
+    // Check if the previous line ended with a continuation indicator:
+    // comma, hyphen, colon, or common author connectors
+    if (/[,:\-&\s](?:and|e|y|&|de|da|do)$/i.test(prevTrimmed) || 
+        prevTrimmed.endsWith('-') || 
+        prevTrimmed.endsWith(',')) {
+      return false; // Definitely a continuation
     }
+
+    // Check if the previous line ends with a sentence/reference finisher
+    const endsWithFinisher = /[.!?\])"'”’]\s*$/.test(prevTrimmed);
+    if (endsWithFinisher) return true;
+
+    // Check if the previous line contains a URL or DOI (commonly ends reference without trailing period)
+    const hasUrl = /https?:\/\/|doi\.org|www\./i.test(prevTrimmed);
+    if (hasUrl) return true;
+
+    // Default fallback: if the previous line doesn't end with a finisher or URL,
+    // treat the current line as a continuation of the previous reference
+    return false;
   }
 
   return false;
@@ -344,18 +369,43 @@ export async function extractReferences(pdfDoc, onProgress) {
     cleanText = combinedText.substring(headerIndex + headerMatch[0].length);
   }
 
-  // Step 3: Segment combined text into individual references
-  // Split using a positive lookahead for reference starting formats at the start of a line
-  const rawReferences = cleanText.split(/\n(?=\[\d+\]|\d+\.\s+[A-ZÀ-ÖØ-Þ]|[A-ZÀ-ÖØ-Þ][a-zA-ZÀ-ÖØ-Þß-ÿ'-]+,\s*[A-ZÀ-ÖØ-Þ][a-zA-ZÀ-ÖØ-Þß-ÿ'-]*\b|[A-ZÀ-ÖØ-Þ][a-zA-ZÀ-ÖØ-Þß-ÿ\s&.,'-]{1,100}\s*\([12]\d{3}\))/);
-
+  // Step 3: Segment combined text into individual references line-by-line
+  const lines = cleanText.split('\n');
   const referencesList = [];
-  for (let ref of rawReferences) {
-    let cleaned = ref.trim().replace(/\s+/g, ' ');
-    // Skip if empty or matches references header
-    if (!cleaned || REF_HEADER_REGEX.test(cleaned) || cleaned.length < 5) {
-      continue;
+  let currentRef = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    // Find the previous non-empty line
+    let prevLine = null;
+    for (let j = i - 1; j >= 0; j--) {
+      if (lines[j].trim() !== '') {
+        prevLine = lines[j];
+        break;
+      }
     }
-    referencesList.push(cleaned);
+
+    if (isNewReferenceStart(line, prevLine)) {
+      if (currentRef.length > 0) {
+        const cleaned = currentRef.join(' ').trim().replace(/\s+/g, ' ');
+        if (cleaned && !REF_HEADER_REGEX.test(cleaned) && cleaned.length >= 5) {
+          referencesList.push(cleaned);
+        }
+      }
+      currentRef = [line];
+    } else {
+      currentRef.push(line);
+    }
+  }
+
+  if (currentRef.length > 0) {
+    const cleaned = currentRef.join(' ').trim().replace(/\s+/g, ' ');
+    if (cleaned && !REF_HEADER_REGEX.test(cleaned) && cleaned.length >= 5) {
+      referencesList.push(cleaned);
+    }
   }
 
   return {
